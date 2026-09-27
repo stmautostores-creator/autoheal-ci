@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Environment and secrets
+.env
+.env.local
+
+# CI & Execution Artifacts
+test-output.log
+recordings/
+*.webm
+*.mp4
+autoheal_workspace_*/
+
+# System files
+.DS_Store
+Thumbs.db
