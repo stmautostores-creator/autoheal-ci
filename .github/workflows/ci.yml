@@ -1,0 +1,65 @@
+name: Continuous Integration & AutoHeal Trigger
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Required to compute git diff HEAD~1
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm ci
+
+      - name: Run Test Suite
+        id: run_tests
+        run: |
+          npm test 2>&1 | tee test-output.log
+
+      - name: Dispatch AutoHeal Webhook on Failure
+        if: failure()
+        env:
+          AUTOHEAL_WEBHOOK_URL: ${{ secrets.AUTOHEAL_WEBHOOK_URL }}
+          AUTOHEAL_API_KEY: ${{ secrets.AUTOHEAL_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "[AutoHeal] Test failure detected. Packaging diagnostic telemetry..."
+
+          # Extract failed test logs and git commit diff
+          FAILURE_LOG=$(tail -n 100 test-output.log | jq -s -R .)
+          COMMIT_DIFF=$(git diff HEAD~1 | jq -s -R .)
+
+          # Dispatch webhook to AutoHeal orchestrator
+          curl -s -X POST "$AUTOHEAL_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-AutoHeal-Key: $AUTOHEAL_API_KEY" \
+            -d @- <<EOF
+          {
+            "repository": "${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "commit_sha": "${{ github.sha }}",
+            "actor": "${{ github.actor }}",
+            "run_id": "${{ github.run_id }}",
+            "run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "failure_log": $FAILURE_LOG,
+            "commit_diff": $COMMIT_DIFF
+          }
+          EOF
+          echo "[AutoHeal] Diagnostic payload transmitted successfully."
