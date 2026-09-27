@@ -4,12 +4,9 @@
   "description": "Autonomous CI failure self-healing service powered by IBM Bob 2.0",
   "main": "src/sessionService.js",
   "scripts": {
-    "test": "jest --runInBand --colors",
-    "test:healed": "jest tests/sessionService.healed.test.js --runInBand --colors",
-    "record-demo": "node record_video.js"
+    "test": "jest --runInBand --colors=false"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "playwright": "^1.42.1"
+    "jest": "^29.7.0"
   }
 }

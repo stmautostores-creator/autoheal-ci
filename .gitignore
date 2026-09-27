@@ -20,3 +20,5 @@ autoheal_workspace_*/
 # System files
 .DS_Store
 Thumbs.db
+# Local test data
+payload.json

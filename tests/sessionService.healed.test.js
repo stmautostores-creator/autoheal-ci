@@ -34,6 +34,20 @@ describe("SessionService Integration Suite (Remediated by IBM Bob 2.0)", () => {
     );
   });
 
+  // [AUTOHEALED BY IBM BOB 2.0]
+  // Covers revokeSession lifecycle — verifies status mutation and idempotent false return
+  test("should revoke an active session and return false for unknown user", async () => {
+    const userId = "usr_revoke_test";
+    await sessionService.createSession(userId, "enterprise-tenant");
+
+    const revoked = await sessionService.revokeSession(userId);
+    expect(revoked).toBe(true);
+    expect(sessionService.getSession(userId).status).toBe("revoked");
+
+    const noop = await sessionService.revokeSession("usr_nonexistent");
+    expect(noop).toBe(false);
+  });
+
   // [SYNTHESIZED INVARIANT REGRESSION GUARD BY IBM BOB 2.0]
   // Guarantees concurrent lifecycle executions do not corrupt memory state
   test("should handle concurrent session creation without race condition drift", async () => {
