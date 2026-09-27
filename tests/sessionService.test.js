@@ -20,7 +20,7 @@ describe("SessionService Integration & Unit Suite", () => {
     const userId = "usr_prod_1001";
 
     // DEFECT: Missing await
-    sessionService.createSession(userId, "enterprise-tenant");
+    await sessionService.createSession(userId, "enterprise-tenant");
 
     // Immediate assertion executes before the 120ms async resolution completes
     const session = sessionService.getSession(userId);
